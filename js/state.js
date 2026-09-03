@@ -41,24 +41,88 @@ class PulseState {
     // Active session parameters
     this.currentRole = 'employee'; // 'employee' | 'pm' | 'rmg'
     this.activeUserId = 'emp_alex'; // Default active user
-    this.selectedWeekId = '2026-W35'; // Default week
-    this.selectedMonth = '2026-08'; // Default August 2026
-    this.viewMode = 'weekly'; // 'weekly' | 'daily' | 'monthly'
-    this.activeDayIndex = 2; // Wednesday
+    this.selectedWeekId = '2026-W36'; // Current week containing today
+    this.selectedMonth = '2026-09'; // Default September 2026
+    this.viewMode = 'daily'; // 'daily' (primary) | 'weekly' | 'monthly' | 'history'
+    this.activeDayIndex = this.getRealTodayInfo().dayIndex; // Real-time today's day of week
     this.modalState = {
       activeModal: null, // 'rejection' | 'new-allocation' | 'request-resource' | 'review-sheet' | 'overtime-request' | 'cell-note'
       data: null
     };
     this.rmgSelectedPmId = 'all'; // 'all' | 'pm_sarah' | 'pm_david'
 
-    // Available weeks metadata
+    // Available weeks metadata with start dates
     this.weeks = [
-      { id: '2026-W32', label: 'Aug 03 – Aug 09, 2026', weekNum: 32, isCurrent: false },
-      { id: '2026-W33', label: 'Aug 10 – Aug 16, 2026', weekNum: 33, isCurrent: false },
-      { id: '2026-W34', label: 'Aug 17 – Aug 23, 2026', weekNum: 34, isCurrent: false },
-      { id: '2026-W35', label: 'Aug 24 – Aug 30, 2026 (Current)', weekNum: 35, isCurrent: true },
-      { id: '2026-W36', label: 'Aug 31 – Sep 06, 2026', weekNum: 36, isCurrent: false }
+      { id: '2026-W32', label: 'Aug 03 – Aug 09, 2026', weekNum: 32, isCurrent: false, startDate: '2026-08-03' },
+      { id: '2026-W33', label: 'Aug 10 – Aug 16, 2026', weekNum: 33, isCurrent: false, startDate: '2026-08-10' },
+      { id: '2026-W34', label: 'Aug 17 – Aug 23, 2026', weekNum: 34, isCurrent: false, startDate: '2026-08-17' },
+      { id: '2026-W35', label: 'Aug 24 – Aug 30, 2026', weekNum: 35, isCurrent: false, startDate: '2026-08-24' },
+      { id: '2026-W36', label: 'Aug 31 – Sep 06, 2026 (Current)', weekNum: 36, isCurrent: true, startDate: '2026-08-31' },
+      { id: '2026-W37', label: 'Sep 07 – Sep 13, 2026', weekNum: 37, isCurrent: false, startDate: '2026-09-07' }
     ];
+  }
+
+  getRealTodayInfo() {
+    const now = new Date();
+    // Monday = 0, Tuesday = 1, Wednesday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6
+    const jsDay = now.getDay();
+    const dayIndex = (jsDay === 0) ? 6 : jsDay - 1;
+    const dayNamesFull = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayNamesShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNamesFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    const fullDayName = dayNamesFull[dayIndex];
+    const shortDayName = dayNamesShort[dayIndex];
+    const monthShort = monthNamesShort[now.getMonth()];
+    const monthFull = monthNamesFull[now.getMonth()];
+    const dateNum = now.getDate();
+    const year = now.getFullYear();
+    const dateFormatted = `${monthShort} ${dateNum < 10 ? '0' + dateNum : dateNum}`;
+    const formattedDate = `${shortDayName}, ${monthShort} ${dateNum < 10 ? '0' + dateNum : dateNum}`;
+    const fullFormattedDate = `${fullDayName}, ${monthShort} ${dateNum < 10 ? '0' + dateNum : dateNum}, ${year}`;
+
+    return {
+      dayIndex,
+      fullDayName,
+      shortDayName,
+      monthShort,
+      monthFull,
+      dateNum,
+      year,
+      dateFormatted,
+      formattedDate,
+      fullFormattedDate
+    };
+  }
+
+  getWeekDays(weekId) {
+    const week = this.weeks.find(w => w.id === weekId) || this.weeks.find(w => w.isCurrent) || this.weeks[4];
+    const startDate = new Date(week.startDate ? week.startDate + 'T00:00:00' : '2026-08-31T00:00:00');
+    const dayNamesShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNamesFull = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const now = new Date();
+    const todayY = now.getFullYear();
+    const todayM = now.getMonth();
+    const todayD = now.getDate();
+
+    return dayNamesShort.map((name, i) => {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const mStr = monthNamesShort[d.getMonth()];
+      const dNum = d.getDate();
+      const isToday = (d.getFullYear() === todayY && d.getMonth() === todayM && d.getDate() === todayD);
+      return {
+        name,
+        fullName: dayNamesFull[i],
+        date: `${mStr} ${dNum < 10 ? '0' + dNum : dNum}`,
+        fullDate: `${dayNamesFull[i]}, ${mStr} ${dNum < 10 ? '0' + dNum : dNum}, ${d.getFullYear()}`,
+        isWeekend: i >= 5,
+        isToday
+      };
+    });
   }
 
   saveState() {
@@ -275,19 +339,28 @@ class PulseState {
   getDailyAllowedHours(employeeId, weekId, dayIndex) {
     const isWeekend = dayIndex >= 5;
     const lock = this.getDayLockStatus(employeeId, dayIndex, weekId);
-    const approvedOT = this.getApprovedOvertimeHours(employeeId, weekId, dayIndex);
-    const baseExpected = (isWeekend || (lock && lock.isLocked)) ? 0 : this.getEmployeeExpectedHoursPerDay(employeeId);
-    return baseExpected + approvedOT;
+    const weeklyOT = this.getApprovedOvertimeHours(employeeId, weekId, null);
+    const specificOT = this.getApprovedOvertimeHours(employeeId, weekId, dayIndex);
+
+    if (isWeekend || (lock && lock.isLocked)) {
+      return specificOT;
+    }
+    const baseExpected = this.getEmployeeExpectedHoursPerDay(employeeId);
+    return baseExpected + weeklyOT;
   }
 
-  // Weekly Allowed Capacity (Sum of all 7 days with approved overtime)
+  // Weekly Allowed Capacity (Sum of valid workdays + total approved overtime for week)
   getWeeklyAllowedHours(employeeId, weekId = null) {
     const targetWeek = weekId || this.selectedWeekId;
-    let totalAllowed = 0;
-    for (let d = 0; d < 7; d++) {
-      totalAllowed += this.getDailyAllowedHours(employeeId, targetWeek, d);
+    let totalBase = 0;
+    for (let d = 0; d < 5; d++) {
+      const lock = this.getDayLockStatus(employeeId, d, targetWeek);
+      if (!lock.isLocked) {
+        totalBase += this.getEmployeeExpectedHoursPerDay(employeeId);
+      }
     }
-    return totalAllowed;
+    const weeklyOT = this.getApprovedOvertimeHours(employeeId, targetWeek, null);
+    return totalBase + weeklyOT;
   }
 
   // Evaluates whether timesheet exceeds RMG allocation cap

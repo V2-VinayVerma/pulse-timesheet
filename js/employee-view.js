@@ -34,16 +34,8 @@ const EmployeeView = {
     });
     const grandTotal = dailyTotals.reduce((sum, h) => sum + h, 0);
 
-    // Days info for current week
-    const weekDays = [
-      { name: 'Mon', date: 'Aug 24', isWeekend: false, isToday: false },
-      { name: 'Tue', date: 'Aug 25', isWeekend: false, isToday: false },
-      { name: 'Wed', date: 'Aug 26', isWeekend: false, isToday: true },
-      { name: 'Thu', date: 'Aug 27', isWeekend: false, isToday: false },
-      { name: 'Fri', date: 'Aug 28', isWeekend: false, isToday: false },
-      { name: 'Sat', date: 'Aug 29', isWeekend: true, isToday: false },
-      { name: 'Sun', date: 'Aug 30', isWeekend: true, isToday: false }
-    ];
+    // Dynamic days info for current week
+    const weekDays = state.getWeekDays(weekId);
 
     const unfilledWorkdays = dailyTotals.slice(0, 5).filter((h, d) => {
       const lock = state.getDayLockStatus(employee.id, d, weekId);
@@ -101,7 +93,7 @@ const EmployeeView = {
         ${unfilledWorkdays > 0 && sheet.status === 'draft' ? this.renderUnfilledWarning(unfilledWorkdays, employee.id, weekId) : ''}
         ${pendingOvertimeReqs.length > 0 ? this.renderOvertimePendingBanner(pendingOvertimeReqs) : ''}
 
-        <!-- 4. Timesheet Workspace (Weekly / Daily / Monthly / History) -->
+        <!-- 4. Timesheet Workspace (Daily Focus as Primary / Weekly / Monthly / History) -->
         ${state.viewMode === 'history'
           ? this.renderHistoryView(sheet, employee, isLocked)
           : (state.viewMode === 'monthly'
@@ -550,7 +542,8 @@ const EmployeeView = {
     ];
 
     return `
-      <tr class="timesheet-row ${isLocked ? 'is-locked' : ''}" data-row-id="${row.id}">
+      <tr class="timesheet-row ${isLocked ? 'is-locked' :
+         ''}" data-row-id="${row.id}">
         <!-- Project, Task, Work Item & Billable Status -->
         <td class="task-meta-cell">
           <div class="project-tag-header">
@@ -693,8 +686,9 @@ const EmployeeView = {
   },
 
   renderDailyView(sheet, weekDays, allocs, employee, expectedHoursPerDay, expectedWeeklyHours, isLocked, isRejected, capCheck) {
-    const currentDayIdx = state.activeDayIndex;
-    const currentDay = weekDays[currentDayIdx];
+    const todayInfo = state.getRealTodayInfo();
+    const currentDayIdx = todayInfo.dayIndex;
+    const currentDay = weekDays[currentDayIdx] || { name: todayInfo.shortDayName, date: todayInfo.dateFormatted, isToday: true };
     const maxAllowed = state.getDailyAllowedHours(employee.id, sheet.weekId, currentDayIdx);
     const dayLock = state.getDayLockStatus(employee.id, currentDayIdx, sheet.weekId);
 
@@ -706,40 +700,33 @@ const EmployeeView = {
     });
     const isDayExceeded = dayTotal > maxAllowed;
     const isTargetMet = grandTotal === expectedWeeklyHours && !capCheck.isOver;
+    const remainingHrs = Math.max(0, expectedWeeklyHours - grandTotal);
     const isSubmitEligible = isTargetMet && !isLocked;
 
     return `
-      <div style="background:#ffffff; border:1px solid var(--grid-border); border-radius:var(--radius-md); padding:1.25rem;">
-        <!-- Day Navigation Tabs & Summary -->
+      <div class="timesheet-daily-card" style="background:#ffffff; border:1px solid var(--grid-border); border-radius:var(--radius-md); padding:1.25rem; box-shadow:var(--shadow-xs);">
+        <!-- Day Navigation Title & Summary (Only Today's Date & Day) -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--grid-border); flex-wrap:wrap; gap:0.5rem;">
           <div>
             <div style="display:flex; align-items:center; gap:0.5rem;">
-              <h2 style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin:0;">
-                ${currentDay.name}, ${currentDay.date}
+              <h2 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin:0;">
+                ${todayInfo.fullFormattedDate}
               </h2>
+              <span class="period-tag" style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:3px;">TODAY</span>
               ${dayLock.isLocked ? `<span class="locked-header-badge">${dayLock.badge}</span>` : ''}
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">
               ${dayLock.isLocked ? `
                 <span style="color:#b91c1c; font-weight:600;">🔒 ${dayLock.label} — Timesheet entries locked</span>
               ` : `
-                Daily Cap: <strong>${maxAllowed}h</strong> • Logged: <strong class="tabular-nums" style="color:${isDayExceeded ? '#e11d48' : (dayTotal === maxAllowed ? 'var(--status-approved-text)' : '#d97706')};">${dayTotal.toFixed(1)}h</strong>
+                Daily Cap: <strong>${maxAllowed}h</strong> • Logged Today: <strong class="tabular-nums" style="color:${isDayExceeded ? '#e11d48' : (dayTotal === maxAllowed ? 'var(--status-approved-text)' : '#d97706')};">${dayTotal.toFixed(1)}h</strong>
                 ${isDayExceeded ? `<span style="color:#e11d48; font-weight:700; margin-left:0.3rem;">(Exceeds daily cap by +${(dayTotal - maxAllowed).toFixed(1)}h)</span>` : ''}
               `}
             </div>
           </div>
 
-          <!-- Day Switcher Pills -->
-          <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
-            ${weekDays.map((d, i) => {
-              const lock = state.getDayLockStatus(employee.id, i, sheet.weekId);
-              const dHrs = sheet.rows.reduce((s, r) => s + (Number(r.hours[i]) || 0), 0);
-              return `
-                <button class="btn-quick ${i === currentDayIdx ? 'btn-quick-primary' : ''}" id="btnSelectDay_${i}" style="font-size:0.75rem; padding:0.25rem 0.55rem;">
-                  ${lock.isLocked ? (lock.type === 'holiday' ? '🏖️' : '🌴') : ''} ${d.name} (${lock.isLocked ? '0h' : `${dHrs}h`})
-                </button>
-              `;
-            }).join('')}
+          <div style="font-size:0.75rem; color:var(--text-secondary); background:var(--bg-canvas); padding:0.35rem 0.65rem; border:1px solid var(--grid-border); border-radius:var(--radius-xs);">
+            Daily Entry • Auto-syncs to Weekly Timesheet
           </div>
         </div>
 
@@ -768,8 +755,10 @@ const EmployeeView = {
                 🧹 Clear Day
               </button>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">
-              Log multiple roles, tasks & sprint tickets for ${currentDay.name}
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="font-size:0.75rem; color:var(--text-muted);">
+                Changes auto-saved
+              </span>
             </div>
           </div>
 
@@ -863,7 +852,7 @@ const EmployeeView = {
 
                   <!-- Standup / Activity Description Note for Today -->
                   <div class="form-group" style="margin:0;">
-                    <label class="field-label-micro">Activity Description / Standup Note for ${currentDay.name}</label>
+                    <label class="field-label-micro">Activity Description / Standup Note for ${todayInfo.fullDayName}</label>
                     <textarea 
                       class="form-textarea daily-note-textarea" 
                       rows="2" 
@@ -880,15 +869,29 @@ const EmployeeView = {
           </div>
         `}
 
-        <!-- Daily View Footer Actions with Strict Submission Requirements -->
+        <!-- Daily View Footer Actions with Weekly Submission Requirements -->
         <div class="timesheet-footer-actions" style="margin-top:1.25rem;">
-          <div style="font-size:0.8rem; color:var(--text-secondary);">
-            Weekly Total: <strong class="tabular-nums" style="${capCheck.isOver ? 'color:#e11d48;' : (isTargetMet ? 'color:var(--status-approved-text);' : 'color:#d97706;')}">${grandTotal.toFixed(1)}h</strong> / ${expectedWeeklyHours}h Required
+          <div style="font-size:0.8rem; color:var(--text-secondary); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+            ${capCheck.isOver ? `
+              <span style="font-weight:700; color:#e11d48; background:#fff1f2; border:1px solid #fecdd3; padding:0.2rem 0.5rem; border-radius:var(--radius-xs);">
+                🚨 Limit Exceeded: You logged ${grandTotal.toFixed(1)}h (+${capCheck.excessHours.toFixed(1)}h extra).
+              </span>
+            ` : (isTargetMet ? `
+              <span style="font-weight:700; color:#15803d; background:#f0fdf4; border:1px solid #bbf7d0; padding:0.2rem 0.5rem; border-radius:var(--radius-xs);">
+                ✓ Full Week Allocation (${expectedWeeklyHours}.0h) Met — Ready for Weekly Submission
+              </span>
+            ` : (remainingHrs > 0 ? `
+              <span style="font-weight:600; color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:0.2rem 0.5rem; border-radius:var(--radius-xs);">
+                ⏳ Weekly Progress: ${grandTotal.toFixed(1)}h / ${expectedWeeklyHours}.0h logged (${remainingHrs.toFixed(1)}h left before weekly submission)
+              </span>
+            ` : ''))}
           </div>
 
           <div class="footer-buttons-group">
             ${sheet.status === 'draft' || sheet.status === 'rejected' ? `
-              <button class="btn-secondary" id="btnSaveDraft">Save Draft</button>
+              <button class="btn-secondary" id="btnSaveDraft" title="Save entries for current day and week">
+                💾 Save Day Log
+              </button>
               <button 
                 class="btn-primary ${!isSubmitEligible ? 'btn-disabled-cap' : ''}" 
                 id="btnSubmitTimesheet" 
@@ -896,12 +899,16 @@ const EmployeeView = {
                 title="${capCheck.isOver 
                   ? 'Cannot submit: Exceeds approved allocation' 
                   : (grandTotal < expectedWeeklyHours 
-                      ? `Cannot submit: Left to fill ${(expectedWeeklyHours - grandTotal).toFixed(1)}h` 
-                      : 'Submit Timesheet for Approval →')}"
+                      ? `Cannot submit: Left to fill ${(expectedWeeklyHours - grandTotal).toFixed(1)}h before weekly submission.` 
+                      : 'Submit Complete Weekly Timesheet for Approval →')}"
               >
-                Submit Timesheet for Approval →
+                Submit Complete Weekly Timesheet →
               </button>
-            ` : ''}
+            ` : `
+              <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">
+                Timesheet is locked in <strong>${sheet.status.toUpperCase()}</strong> state.
+              </div>
+            `}
           </div>
         </div>
       </div>
@@ -1326,49 +1333,23 @@ const EmployeeView = {
     `;
   },
 
-  sendHourFeedbackToast(employeeId, weekId, dayIdx) {
-    const sheet = state.getTimesheet(employeeId, weekId);
-    const expectedWeeklyHours = state.getWeeklyAllowedHours(employeeId, weekId);
-    const maxAllowedDay = state.getDailyAllowedHours(employeeId, weekId, dayIdx);
-    
-    let dayTotal = 0;
-    let grandTotal = 0;
-    if (sheet && sheet.rows) {
-      sheet.rows.forEach(r => {
-        dayTotal += Number(r.hours[dayIdx]) || 0;
-        grandTotal += r.hours.reduce((sum, h) => sum + (Number(h) || 0), 0);
-      });
-    }
-
-    const dayLock = state.getDayLockStatus(employeeId, dayIdx, weekId);
-    if (dayLock.isLocked) {
-      App.showToast(`🔒 Cannot log hours: ${dayLock.label} is locked.`, 'error');
-      return;
-    }
-
-    if (dayTotal > maxAllowedDay || grandTotal > expectedWeeklyHours) {
-      const excess = grandTotal > expectedWeeklyHours ? (grandTotal - expectedWeeklyHours) : (dayTotal - maxAllowedDay);
-      App.showToast(`⚠️ Limit Exceeded: You logged ${grandTotal.toFixed(1)}h against ${expectedWeeklyHours}h allocated (+${excess.toFixed(1)}h extra). Please request your manager for additional hours if you work extra hours.`, 'error');
-    } else if (grandTotal < expectedWeeklyHours) {
-      const remaining = expectedWeeklyHours - grandTotal;
-      App.showToast(`⏳ Under Allocation: You logged ${grandTotal.toFixed(1)}h, which is ${remaining.toFixed(1)}h short of your ${expectedWeeklyHours}h requirement for this duration. Submission requires full allocation completion.`, 'warning');
-    } else if (grandTotal === expectedWeeklyHours) {
-      App.showToast(`✓ Allocation Target Met (${expectedWeeklyHours}.0h)! Timesheet is ready for submission.`, 'success');
-    }
-  },
-
   bindEvents(container, sheet, employee) {
     const employeeId = employee.id;
     const weekId = state.selectedWeekId;
 
-    // 1. Cell Inputs with Keyboard Tab / Enter Flow & Immediate Feedback Toasts
+    // 1. Cell Inputs with Keyboard Tab / Enter Flow
     container.querySelectorAll('.hour-input').forEach(input => {
       input.addEventListener('change', (e) => {
         const rowId = e.target.getAttribute('data-row-id');
         const dayIdx = parseInt(e.target.getAttribute('data-day-idx'), 10);
-        const val = parseFloat(e.target.value) || 0;
-        state.updateCellHours(employeeId, weekId, rowId, dayIdx, val);
-        this.sendHourFeedbackToast(employeeId, weekId, dayIdx);
+        const rawVal = e.target.value.trim();
+        const val = parseFloat(rawVal) || 0;
+
+        if (rawVal !== '' && val <= 0) {
+          App.showToast("⚠️ Hours cannot be 0. It should be greater than 0.", "warning");
+        }
+
+        state.updateCellHours(employeeId, weekId, rowId, dayIdx, Math.max(0, val));
       });
 
       input.addEventListener('keydown', (e) => {
@@ -1382,7 +1363,7 @@ const EmployeeView = {
       });
     });
 
-    // 2. Micro-steppers with Feedback Toasts
+    // 2. Micro-steppers
     container.querySelectorAll('.btn-step-up').forEach(btn => {
       btn.addEventListener('click', () => {
         const rowId = btn.getAttribute('data-row-id');
@@ -1391,7 +1372,6 @@ const EmployeeView = {
         const current = parseFloat(input.value) || 0;
         const newHrs = current + 0.5;
         state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
-        this.sendHourFeedbackToast(employeeId, weekId, dayIdx);
       });
     });
 
@@ -1402,8 +1382,10 @@ const EmployeeView = {
         const input = container.querySelector(`.hour-input[data-row-id="${rowId}"][data-day-idx="${dayIdx}"]`);
         const current = parseFloat(input.value) || 0;
         const newHrs = Math.max(0, current - 0.5);
+        if (newHrs === 0 && current > 0) {
+          App.showToast("⚠️ Hours cannot be 0. It should be greater than 0.", "warning");
+        }
         state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
-        this.sendHourFeedbackToast(employeeId, weekId, dayIdx);
       });
     });
 

@@ -254,17 +254,17 @@ const App = {
           <nav class="sidebar-nav-menu">
             ${role === 'employee' ? `
               <div class="nav-section-title">Timesheet Workspace</div>
-              <button class="nav-item-btn ${state.viewMode === 'weekly' ? 'active' : ''}" id="sideNavWeekly">
-                <span class="nav-icon">📅</span>
-                <span class="nav-label">Weekly Grid</span>
-              </button>
               <button class="nav-item-btn ${state.viewMode === 'daily' ? 'active' : ''}" id="sideNavDaily">
                 <span class="nav-icon">🎯</span>
-                <span class="nav-label">Daily Focus</span>
+                <span class="nav-label">Daily Focus (Primary)</span>
+              </button>
+              <button class="nav-item-btn ${state.viewMode === 'weekly' ? 'active' : ''}" id="sideNavWeekly">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Weekly Overview</span>
               </button>
               <button class="nav-item-btn ${state.viewMode === 'monthly' ? 'active' : ''}" id="sideNavMonthly">
                 <span class="nav-icon">📊</span>
-                <span class="nav-label">Monthly Overview</span>
+                <span class="nav-label">Monthly Tracking</span>
               </button>
               <button class="nav-item-btn ${state.viewMode === 'history' ? 'active' : ''}" id="sideNavHistory">
                 <span class="nav-icon">📜</span>
@@ -278,14 +278,6 @@ const App = {
                 <span class="nav-label">Team Submissions</span>
                 ${pmPendingCount > 0 ? `<span class="sidebar-badge">${pmPendingCount}</span>` : ''}
               </button>
-
-              <div class="nav-section-title">Managed Projects (Click)</div>
-              ${pmProjects.map(p => `
-                <button class="nav-item-btn" data-action="open-project-details" data-project-id="${p.id}" style="font-size:0.75rem;">
-                  <span style="color:${p.color || 'var(--brand-700)'}; font-size:0.85rem;">●</span>
-                  <span class="nav-label">${p.name}</span>
-                </button>
-              `).join('')}
             ` : `
               <div class="nav-section-title">Resource Governance</div>
               <button class="nav-item-btn active" id="sideNavRmgMatrix">
@@ -338,7 +330,7 @@ const App = {
                 <span>›</span>
                 <span class="top-breadcrumb-active">
                   ${role === 'employee' 
-                    ? (state.viewMode === 'history' ? 'Timesheet History & Archive' : (state.viewMode === 'monthly' ? 'Monthly Focus' : (state.viewMode === 'daily' ? 'Daily Focus Mode' : 'Weekly Timesheet Grid')))
+                    ? (state.viewMode === 'history' ? 'Timesheet History & Archive' : (state.viewMode === 'monthly' ? 'Monthly Focus' : (state.viewMode === 'daily' ? 'Daily Focus Mode (Primary)' : 'Weekly Timesheet Grid')))
                     : (role === 'pm' ? `${activeUserName}'s Project Hub` : 'Resource Management Office')
                   }
                 </span>
@@ -348,11 +340,11 @@ const App = {
             <div class="top-context-right">
               ${role === 'employee' ? `
                 <div class="view-mode-toggle">
-                  <button class="view-mode-btn ${state.viewMode === 'weekly' ? 'active' : ''}" id="btnViewWeekly">
-                    Weekly
-                  </button>
                   <button class="view-mode-btn ${state.viewMode === 'daily' ? 'active' : ''}" id="btnViewDaily">
                     Daily
+                  </button>
+                  <button class="view-mode-btn ${state.viewMode === 'weekly' ? 'active' : ''}" id="btnViewWeekly">
+                    Weekly
                   </button>
                   <button class="view-mode-btn ${state.viewMode === 'monthly' ? 'active' : ''}" id="btnViewMonthly">
                     Monthly

@@ -1,0 +1,267 @@
+/* ==========================================================================
+   Pulse Components: High-Density PM & RMG Tables, Modals, Tooltips & Forms
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Clean Generic Cards & Sections
+   -------------------------------------------------------------------------- */
+.chart-card {
+  background: #ffffff;
+  border: 1px solid var(--grid-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  box-shadow: var(--shadow-xs);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--grid-border);
+}
+
+.chart-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. Metric Summary Strips
+   -------------------------------------------------------------------------- */
+.stats-overview-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid var(--grid-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.stat-val {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.stat-action-btn {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--grid-border);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+
+.stat-action-btn:hover {
+  background: var(--brand-700);
+  color: #ffffff;
+  border-color: var(--brand-700);
+}
+
+/* --------------------------------------------------------------------------
+   3. PM & RMG Tables (High-Density Linear Style)
+   -------------------------------------------------------------------------- */
+.pm-team-table,
+.rmg-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background: #ffffff;
+}
+
+.pm-team-table th,
+.pm-team-table td,
+.rmg-matrix-table th,
+.rmg-matrix-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--grid-border);
+  text-align: left;
+}
+
+.pm-team-table th,
+.rmg-matrix-table th {
+  background: var(--bg-canvas);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pm-team-table tr:hover,
+.rmg-matrix-table tr:hover {
+  background: #f8fafc;
+}
+
+/* Utilization Progress Bar */
+.utilization-bar-container {
+  width: 100px;
+  height: 6px;
+  background: var(--bg-canvas);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.utilization-bar-fill {
+  height: 100%;
+  background: var(--brand-700);
+  border-radius: var(--radius-full);
+}
+
+.utilization-bar-fill.is-over {
+  background: var(--status-over-solid);
+}
+
+/* --------------------------------------------------------------------------
+   4. Forms & Input Fields
+   -------------------------------------------------------------------------- */
+.form-group {
+  margin-bottom: 0.85rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--grid-border);
+  border-radius: var(--radius-xs);
+  padding: 0.45rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--brand-700);
+}
+
+/* --------------------------------------------------------------------------
+   5. Interactive Tooltip System (Crisp, High-DPI Bubble)
+   -------------------------------------------------------------------------- */
+.pulse-tooltip-bubble {
+  position: fixed;
+  z-index: 100000;
+  pointer-events: none;
+  background: var(--brand-navy);
+  color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  max-width: 280px;
+  min-width: 160px;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+.pulse-tooltip-bubble.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pulse-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #99f6e4;
+}
+
+.pulse-tooltip-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pulse-tooltip-badge {
+  background: rgba(15, 118, 110, 0.4);
+  color: #99f6e4;
+  border: 1px solid rgba(15, 118, 110, 0.6);
+  padding: 0.05rem 0.3rem;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.pulse-tooltip-content {
+  color: #f1f5f9;
+  font-size: 0.75rem;
+  font-weight: 400;
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+.pulse-tooltip-arrow {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--brand-navy);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: rotate(45deg);
+}
+
+.pulse-tooltip-bubble[data-placement="top"] .pulse-tooltip-arrow {
+  bottom: -4px;
+  left: 50%;
+  margin-left: -3px;
+  border-top: none;
+  border-left: none;
+}
+
+.pulse-tooltip-bubble[data-placement="bottom"] .pulse-tooltip-arrow {
+  top: -4px;
+  left: 50%;
+  margin-left: -3px;
+  border-bottom: none;
+  border-right: none;
+}

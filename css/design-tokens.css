@@ -1,0 +1,134 @@
+/* ==========================================================================
+   Pulse Design Tokens: Restrained, Functional, High-Density System
+   Color System: Deep Navy (#172033), Slate (#475569), Teal (#0F766E), Flat White
+   ========================================================================== */
+
+:root {
+  /* Color System: Neutral, Clean, High-Contrast */
+  --bg-app: #f8fafc;
+  --bg-canvas: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-card-subtle: #f8fafc;
+  
+  /* Text Colors */
+  --text-primary: #172033;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Brand / Primary Accent (Deep Teal & Navy) */
+  --brand-50: #f0fdfa;
+  --brand-100: #ccfbf1;
+  --brand-200: #99f6e4;
+  --brand-500: #14b8a6;
+  --brand-600: #0d9488;
+  --brand-700: #0f766e; /* Primary Accent */
+  --brand-800: #115e59;
+  --brand-900: #134e4a;
+  --brand-navy: #172033; /* Primary Deep Navy */
+
+  /* Status Tokens (Subtle, Flat, Crisp) */
+  /* Draft */
+  --status-draft-bg: #f1f5f9;
+  --status-draft-border: #cbd5e1;
+  --status-draft-text: #475569;
+  --status-draft-solid: #64748b;
+
+  /* Submitted / Under Review */
+  --status-submitted-bg: #eff6ff;
+  --status-submitted-border: #bfdbfe;
+  --status-submitted-text: #1d4ed8;
+  --status-submitted-solid: #2563eb;
+
+  /* PM Approved / Intermediate */
+  --status-pm-approved-bg: #f5f3ff;
+  --status-pm-approved-border: #ddd6fe;
+  --status-pm-approved-text: #6d28d9;
+  --status-pm-approved-solid: #7c3aed;
+
+  /* Final Approved */
+  --status-approved-bg: #f0fdf4;
+  --status-approved-border: #bbf7d0;
+  --status-approved-text: #15803d;
+  --status-approved-solid: #16a34a;
+
+  /* Rejected */
+  --status-rejected-bg: #fef2f2;
+  --status-rejected-border: #fecaca;
+  --status-rejected-text: #b91c1c;
+  --status-rejected-solid: #dc2626;
+
+  /* Bench / Available */
+  --status-bench-bg: #f0f9ff;
+  --status-bench-border: #bae6fd;
+  --status-bench-text: #0369a1;
+  --status-bench-solid: #0ea5e9;
+
+  /* Overallocated */
+  --status-over-bg: #fffbeb;
+  --status-over-border: #fde68a;
+  --status-over-text: #b45309;
+  --status-over-solid: #d97706;
+
+  /* Ledger Grid Lines & Accents */
+  --grid-border: #e2e8f0;
+  --grid-border-subtle: #f1f5f9;
+  --grid-border-strong: #cbd5e1;
+  --grid-header-bg: #f8fafc;
+  --grid-cell-active: #f0fdfa;
+  --grid-zebra-bg: #ffffff;
+  --grid-weekend-bg: #f8fafc;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Monaco, monospace;
+  
+  /* Restrained Compact Radii (3px - 6px) */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 9999px;
+
+  /* Subtle Crisp Border Shadows (Zero Fluffy Glows) */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 3px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 6px 12px -2px rgba(15, 23, 42, 0.08), 0 3px 6px -3px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 12px 20px -4px rgba(15, 23, 42, 0.1);
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-normal: 180ms ease;
+}
+
+/* Reset & Global Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  font-family: var(--font-mono);
+}

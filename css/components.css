@@ -117,11 +117,14 @@
   background: #f8fafc;
 }
 
-/* Utilization Progress Bar */
+/* --------------------------------------------------------------------------
+   Allocation & Utilization Gradient Design System (Green -> Orange -> Amber-Red)
+   -------------------------------------------------------------------------- */
 .utilization-bar-container {
-  width: 100px;
-  height: 6px;
-  background: var(--bg-canvas);
+  width: 85px;
+  height: 7px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-full);
   overflow: hidden;
   display: inline-block;
@@ -131,12 +134,103 @@
 
 .utilization-bar-fill {
   height: 100%;
-  background: var(--brand-700);
   border-radius: var(--radius-full);
+  transition: width 0.3s ease;
 }
 
-.utilization-bar-fill.is-over {
-  background: var(--status-over-solid);
+/* 0% Bench (Available) - Emerald Green */
+.utilization-bar-fill.fill-bench {
+  width: 100% !important;
+  background: linear-gradient(90deg, #86efac, #22c55e);
+  opacity: 0.35;
+}
+
+/* Partial Allocation (1% - 99%) - Vibrant Orange Gradient */
+.utilization-bar-fill.fill-partial {
+  background: linear-gradient(90deg, #fdba74 0%, #f97316 50%, #ea580c 100%);
+}
+
+/* 100% Fully Allocated - Amber-Red Gradient */
+.utilization-bar-fill.fill-full {
+  background: linear-gradient(90deg, #f59e0b 0%, #ef4444 60%, #dc2626 100%);
+}
+
+/* >100% Over Allocated - Deep Red Alert Gradient */
+.utilization-bar-fill.fill-over {
+  background: linear-gradient(90deg, #f87171 0%, #ef4444 50%, #991b1b 100%);
+  box-shadow: 0 0 6px rgba(225, 29, 72, 0.4);
+}
+
+/* Allocation Status Badges */
+.alloc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Bench 0% Utilized (Green) */
+.alloc-badge.badge-bench {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #15803d;
+}
+
+.alloc-badge.badge-bench .alloc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34d399, #10b981);
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+}
+
+/* Partial Allocation (Orange) */
+.alloc-badge.badge-partial {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+}
+
+.alloc-badge.badge-partial .alloc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  box-shadow: 0 0 4px rgba(234, 88, 12, 0.4);
+}
+
+/* 100% Fully Allocated (Amber-Red) */
+.alloc-badge.badge-full {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+}
+
+.alloc-badge.badge-full .alloc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+}
+
+/* Over Allocated (>100%) (Deep Red) */
+.alloc-badge.badge-over {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+.alloc-badge.badge-over .alloc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+  box-shadow: 0 0 5px rgba(185, 28, 28, 0.6);
 }
 
 /* --------------------------------------------------------------------------

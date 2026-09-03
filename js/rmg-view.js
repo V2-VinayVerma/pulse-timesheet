@@ -91,12 +91,28 @@ const RMGView = {
             <span style="font-size:0.72rem; color:var(--text-muted);">${projects.length} Projects</span>
           </div>
 
-          <div class="stat-card" style="border-left:3px solid var(--status-over-solid);">
+          <div class="stat-card" style="border-left:3.5px solid #10b981;">
             <div>
-              <div class="stat-label">Not Filled / Drafts</div>
-              <div class="stat-val" style="color:var(--status-over-solid);">${orgSummary.draftCount}</div>
+              <div class="stat-label">On Bench (0% Utilized)</div>
+              <div class="stat-val" style="color:#059669;">${benchCount}</div>
             </div>
-            <span class="status-badge status-draft" style="font-size:0.65rem;">Unlogged</span>
+            <span class="alloc-badge badge-bench" style="font-size:0.65rem;"><span class="alloc-dot"></span> Available</span>
+          </div>
+
+          <div class="stat-card" style="border-left:3.5px solid #f97316;">
+            <div>
+              <div class="stat-label">Partial Allocation</div>
+              <div class="stat-val" style="color:#ea580c;">${partialCount}</div>
+            </div>
+            <span class="alloc-badge badge-partial" style="font-size:0.65rem;"><span class="alloc-dot"></span> 1-99% Load</span>
+          </div>
+
+          <div class="stat-card" style="border-left:3.5px solid #ef4444;">
+            <div>
+              <div class="stat-label">100% Fully Allocated</div>
+              <div class="stat-val" style="color:#dc2626;">${fullCount}</div>
+            </div>
+            <span class="alloc-badge badge-full" style="font-size:0.65rem;"><span class="alloc-dot"></span> Full Capacity</span>
           </div>
 
           <div class="stat-card" style="border-left:3px solid var(--brand-700);">
@@ -113,22 +129,6 @@ const RMGView = {
               <div class="stat-val" style="color:var(--status-approved-text);">${pendingPmApprovedTimesheets.length}</div>
             </div>
             <span class="status-badge status-pm_approved" style="font-size:0.65rem;">To Certify</span>
-          </div>
-
-          <div class="stat-card" style="border-left:3px solid #7c3aed;">
-            <div>
-              <div class="stat-label">Extra Hours Queue</div>
-              <div class="stat-val" style="color:#7c3aed;">${pendingOvertimeForRMG.length}</div>
-            </div>
-            <span class="status-badge" style="background:#f5f3ff; color:#6d28d9; border:1px solid #ddd6fe; font-size:0.65rem;">${pendingOvertimeForRMG.length} To Review</span>
-          </div>
-
-          <div class="stat-card" style="border-left:3px solid var(--status-bench-solid);">
-            <div>
-              <div class="stat-label">On Bench (Available)</div>
-              <div class="stat-val" style="color:var(--status-bench-text);">${benchCount}</div>
-            </div>
-            <span class="status-badge status-bench" style="font-size:0.65rem;">Available</span>
           </div>
         </div>
 
@@ -437,31 +437,57 @@ const RMGView = {
                 </tr>
               </thead>
               <tbody>
-                ${employeeRows.map(row => `
-                  <tr>
-                    <td>
-                      <strong style="color:var(--text-primary); font-size:0.8rem;">${row.employee.name}</strong>
-                      <div style="font-size:0.68rem; color:var(--text-muted);">${row.employee.role}</div>
-                    </td>
-                    <td style="font-size:0.75rem; color:var(--text-secondary);">
-                      ${row.allocations.length === 0 ? '<span style="color:var(--status-bench-text);">Bench (0h)</span>' : row.allocations.map(a => `${state.getProject(a.projectId)?.name || 'Project'} (${a.hoursPerDay}h/d)`).join(', ')}
-                    </td>
-                    <td class="tabular-nums" style="font-size:0.8rem; font-weight:600;">
-                      ${row.totalHours}h / 8h
-                    </td>
-                    <td>
-                      <div class="utilization-bar-container">
-                        <div class="utilization-bar-fill ${row.statusType === 'over' ? 'is-over' : ''}" style="width:${Math.min(100, row.utilPct)}%;"></div>
-                      </div>
-                      <span class="tabular-nums" style="font-size:0.75rem; font-weight:600;">${row.utilPct}%</span>
-                    </td>
-                    <td style="text-align:right;">
-                      <button class="btn-secondary" data-action="allocate-emp" data-emp-id="${row.employee.id}" style="font-size:0.68rem; padding:0.15rem 0.45rem;">
-                        Manage Allocation
-                      </button>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${employeeRows.map(row => {
+                  let fillClass = 'fill-bench';
+                  let badgeHtml = '<span class="alloc-badge badge-bench"><span class="alloc-dot"></span> 0% Bench (Available)</span>';
+                  let allocHtml = '<span class="alloc-badge badge-bench"><span class="alloc-dot"></span> Bench (0h Available)</span>';
+
+                  if (row.utilPct === 0) {
+                    fillClass = 'fill-bench';
+                    badgeHtml = '<span class="alloc-badge badge-bench"><span class="alloc-dot"></span> 0% Bench (Available)</span>';
+                    allocHtml = '<span class="alloc-badge badge-bench"><span class="alloc-dot"></span> Bench (0h Available)</span>';
+                  } else if (row.utilPct < 100) {
+                    fillClass = 'fill-partial';
+                    badgeHtml = `<span class="alloc-badge badge-partial"><span class="alloc-dot"></span> ${row.utilPct}% Partial</span>`;
+                    allocHtml = row.allocations.map(a => `<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; background:#fff7ed; border:1px solid #fed7aa; color:#c2410c; border-radius:3px; font-weight:600; font-size:0.72rem;">● ${state.getProject(a.projectId)?.name || 'Project'} (${a.hoursPerDay}h/d)</span>`).join('');
+                  } else if (row.utilPct === 100) {
+                    fillClass = 'fill-full';
+                    badgeHtml = `<span class="alloc-badge badge-full"><span class="alloc-dot"></span> 100% Fully Allocated</span>`;
+                    allocHtml = row.allocations.map(a => `<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; background:#fff1f2; border:1px solid #fecdd3; color:#be123c; border-radius:3px; font-weight:600; font-size:0.72rem;">● ${state.getProject(a.projectId)?.name || 'Project'} (${a.hoursPerDay}h/d)</span>`).join('');
+                  } else {
+                    fillClass = 'fill-over';
+                    badgeHtml = `<span class="alloc-badge badge-over"><span class="alloc-dot"></span> ${row.utilPct}% Over-Allocated</span>`;
+                    allocHtml = row.allocations.map(a => `<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 7px; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; border-radius:3px; font-weight:600; font-size:0.72rem;">● ${state.getProject(a.projectId)?.name || 'Project'} (${a.hoursPerDay}h/d)</span>`).join('');
+                  }
+
+                  return `
+                    <tr>
+                      <td>
+                        <strong style="color:var(--text-primary); font-size:0.8rem;">${row.employee.name}</strong>
+                        <div style="font-size:0.68rem; color:var(--text-muted);">${row.employee.role}</div>
+                      </td>
+                      <td>
+                        ${allocHtml}
+                      </td>
+                      <td class="tabular-nums" style="font-size:0.8rem; font-weight:600;">
+                        ${row.totalHours}h / 8h
+                      </td>
+                      <td>
+                        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                          <div class="utilization-bar-container" title="Utilization: ${row.utilPct}%">
+                            <div class="utilization-bar-fill ${fillClass}" style="width:${row.utilPct === 0 ? 100 : Math.min(100, row.utilPct)}%;"></div>
+                          </div>
+                          ${badgeHtml}
+                        </div>
+                      </td>
+                      <td style="text-align:right;">
+                        <button class="btn-secondary" data-action="allocate-emp" data-emp-id="${row.employee.id}" style="font-size:0.68rem; padding:0.15rem 0.45rem;">
+                          Manage Allocation
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
               </tbody>
             </table>
           </div>

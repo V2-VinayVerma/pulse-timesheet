@@ -315,7 +315,16 @@ const PMView = {
             ${projLinks || '<span style="color:var(--text-muted); font-size:0.75rem;">Internal</span>'}
           </div>
         </td>
-        <td class="tabular-nums" style="font-size:0.75rem;">${allocatedHrs}h</td>
+        <td>
+          ${(() => {
+            const dailyHrs = rec.allocations.reduce((s, a) => s + Number(a.hoursPerDay), 0);
+            const util = Math.round((dailyHrs / 8) * 100);
+            if (util === 0) return '<span class="alloc-badge badge-bench"><span class="alloc-dot"></span> Bench (0h)</span>';
+            if (util < 100) return `<span class="alloc-badge badge-partial"><span class="alloc-dot"></span> ${allocatedHrs}h (${util}%)</span>`;
+            if (util === 100) return `<span class="alloc-badge badge-full"><span class="alloc-dot"></span> ${allocatedHrs}h (100%)</span>`;
+            return `<span class="alloc-badge badge-over"><span class="alloc-dot"></span> ${allocatedHrs}h (${util}%)</span>`;
+          })()}
+        </td>
         <td>
           <strong class="tabular-nums" style="font-size:0.85rem; color:${loggedHrs === allocatedHrs ? 'var(--status-approved-text)' : 'var(--text-primary)'};">
             ${loggedHrs.toFixed(1)}h

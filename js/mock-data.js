@@ -573,6 +573,39 @@ const INITIAL_MOCK_DATA = {
           ]
         }
       ]
+    },
+
+    // Elena Rostova - Week 36 (Current Week: Sep 1 Holiday & Sep 2 Leave auto-deducted)
+    {
+      id: 'ts_elena_w36',
+      employeeId: 'emp_elena',
+      weekId: '2026-W36',
+      weekStart: '2026-08-31',
+      weekEnd: '2026-09-06',
+      status: 'draft',
+      submittedAt: null,
+      approvedAt: null,
+      rejectedAt: null,
+      rejectionReason: null,
+      rows: [
+        {
+          id: 'row_elena_w36_1',
+          projectId: 'proj_helios',
+          task: 'System Architecture',
+          workItem: 'Architecture Planning',
+          description: 'Multi-region enterprise architecture sync and capacity sizing review',
+          hours: [2, 0, 0, 2, 2, 0, 0],
+          dayNotes: [
+            'Architecture blueprint review and cloud cost analysis',
+            '🏖️ HOLIDAY: Company Statutory Holiday',
+            '🌴 ON LEAVE: Approved Annual Leave',
+            'Microservices event mesh and Kafka topic sizing',
+            'RMG cross-project capacity planning model sync',
+            '',
+            ''
+          ]
+        }
+      ]
     }
   ],
 
@@ -700,6 +733,13 @@ const INITIAL_MOCK_DATA = {
       type: 'public_holiday'
     },
     {
+      date: '2026-09-01',
+      weekId: '2026-W36',
+      dayIndex: 1, // Tuesday
+      name: 'Company Statutory Holiday',
+      type: 'public_holiday'
+    },
+    {
       date: '2026-09-07',
       weekId: '2026-W37',
       dayIndex: 0, // Monday
@@ -728,6 +768,16 @@ const INITIAL_MOCK_DATA = {
       date: '2026-08-25',
       type: 'medical',
       name: 'Approved Sick / Medical Leave',
+      approvedBy: 'rmg_elena'
+    },
+    {
+      id: 'leave_elena_w36',
+      employeeId: 'emp_elena',
+      weekId: '2026-W36',
+      dayIndex: 2, // Wednesday (Sep 02)
+      date: '2026-09-02',
+      type: 'vacation',
+      name: 'Approved Annual Leave',
       approvedBy: 'rmg_elena'
     }
   ]

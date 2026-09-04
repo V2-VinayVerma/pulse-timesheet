@@ -24,12 +24,23 @@ class PulseState {
         if (!this.data.overtimeRequests) {
           this.data.overtimeRequests = JSON.parse(JSON.stringify(defaultData.overtimeRequests || []));
         }
-        if (!this.data.holidays) {
-          this.data.holidays = JSON.parse(JSON.stringify(defaultData.holidays || []));
-        }
-        if (!this.data.leaves) {
-          this.data.leaves = JSON.parse(JSON.stringify(defaultData.leaves || []));
-        }
+        // Merge holidays
+        const existingHolidays = this.data.holidays || [];
+        (defaultData.holidays || []).forEach(dh => {
+          if (!existingHolidays.some(h => h.weekId === dh.weekId && h.dayIndex === dh.dayIndex)) {
+            existingHolidays.push(JSON.parse(JSON.stringify(dh)));
+          }
+        });
+        this.data.holidays = existingHolidays;
+
+        // Merge leaves
+        const existingLeaves = this.data.leaves || [];
+        (defaultData.leaves || []).forEach(dl => {
+          if (!existingLeaves.some(l => l.employeeId === dl.employeeId && l.weekId === dl.weekId && l.dayIndex === dl.dayIndex)) {
+            existingLeaves.push(JSON.parse(JSON.stringify(dl)));
+          }
+        });
+        this.data.leaves = existingLeaves;
       } else {
         this.data = JSON.parse(JSON.stringify(defaultData));
       }
@@ -310,26 +321,49 @@ class PulseState {
     return leaves.find(l => l.employeeId === employeeId && l.weekId === targetWeek && l.dayIndex === dayIndex) || null;
   }
 
-  // Consolidated day lock status (Holiday / Approved Leave / Weekend)
+  // Consolidated day lock status (Holiday / Approved Leave / Weekend / Working)
   getDayLockStatus(employeeId, dayIndex, weekId = null) {
     const targetWeek = weekId || this.selectedWeekId;
     if (dayIndex === 5 || dayIndex === 6) {
       return { 
         isLocked: true, 
+        statusType: 'weekend',
         type: 'weekend', 
         label: dayIndex === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)', 
-        badge: '🏖️ WEEKEND' 
+        badge: '🏖️ WEEKEND',
+        statusLabel: 'Weekend'
       };
     }
     const holiday = this.getHolidayForDay(dayIndex, targetWeek);
     if (holiday) {
-      return { isLocked: true, type: 'holiday', label: holiday.name, badge: '🏖️ HOLIDAY' };
+      return { 
+        isLocked: true, 
+        statusType: 'holiday',
+        type: 'holiday', 
+        label: holiday.name, 
+        badge: '🏖️ HOLIDAY',
+        statusLabel: 'Holiday'
+      };
     }
     const leave = this.getEmployeeLeaveForDay(employeeId, dayIndex, targetWeek);
     if (leave) {
-      return { isLocked: true, type: 'leave', label: leave.name, badge: '🌴 ON LEAVE' };
+      return { 
+        isLocked: true, 
+        statusType: 'leave',
+        type: 'leave', 
+        label: leave.name, 
+        badge: '🌴 ON LEAVE',
+        statusLabel: 'Leave'
+      };
     }
-    return { isLocked: false };
+    return { 
+      isLocked: false, 
+      statusType: 'working',
+      type: 'working', 
+      label: 'Working Day', 
+      badge: '💼 WORKING',
+      statusLabel: 'Working'
+    };
   }
 
   // Check if an employee has approved or PM-endorsed overtime for a specific day/week

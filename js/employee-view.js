@@ -403,13 +403,17 @@ const EmployeeView = {
               ${weekDays.map((day, dayIdx) => {
                 const lock = state.getDayLockStatus(sheet.employeeId, dayIdx, sheet.weekId);
                 const isWeekend = dayIdx >= 5 || day.isWeekend || lock.type === 'weekend';
-                const lockBadge = lock.isLocked ? lock.badge : (isWeekend ? '🏖️ WEEKEND' : '');
+                const statusType = isWeekend ? 'weekend' : (lock.isLocked ? lock.type : 'working');
                 const lockLabel = isWeekend ? (dayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : lock.label;
+                const statusText = statusType === 'holiday' ? 'Holiday' : (statusType === 'leave' ? 'Leave' : (statusType === 'weekend' ? 'Weekend' : 'Working'));
                 return `
-                  <th class="col-day-header ${day.isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''} ${lock.isLocked ? 'is-locked-day' : ''}" data-locked-type="${isWeekend ? 'weekend' : lock.type}" data-locked-label="${lockLabel}">
+                  <th class="col-day-header ${day.isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''} ${lock.isLocked ? 'is-locked-day' : ''} day-status-${statusType}" data-locked-type="${isWeekend ? 'weekend' : lock.type}" data-locked-label="${lockLabel}">
                     <div class="day-name">${day.name.toUpperCase()}</div>
                     <div class="day-date">${day.date}</div>
-                    ${lockBadge ? `<div class="locked-header-badge">${lockBadge}</div>` : ''}
+                    <div class="day-status-pill day-status-pill-${statusType}" title="Status: ${statusText}">
+                      <span class="status-indicator-dot"></span>
+                      <span>${statusText}</span>
+                    </div>
                   </th>
                 `;
               }).join('')}
@@ -712,25 +716,28 @@ const EmployeeView = {
     const isSubmitEligible = isTargetMet && !isLocked;
 
     const isDayBlocked = currentDayIdx >= 5 || dayLock.isLocked;
-    const blockType = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? 'weekend' : dayLock.type;
-    const blockLabel = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? (currentDayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : dayLock.label;
-    const blockBadge = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? '🏖️ WEEKEND' : dayLock.badge;
+    const blockType = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? 'weekend' : (dayLock.isLocked ? dayLock.type : 'working');
+    const blockLabel = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? (currentDayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : (dayLock.isLocked ? dayLock.label : 'Working Day');
+    const statusText = blockType === 'holiday' ? 'Holiday' : (blockType === 'leave' ? 'Leave' : (blockType === 'weekend' ? 'Weekend' : 'Working'));
 
     return `
       <div class="timesheet-daily-card" style="background:#ffffff; border:1px solid var(--grid-border); border-radius:var(--radius-md); padding:1.25rem; box-shadow:var(--shadow-xs);">
         <!-- Day Navigation Title & Summary (Only Today's Date & Day) -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--grid-border); flex-wrap:wrap; gap:0.5rem;">
           <div>
-            <div style="display:flex; align-items:center; gap:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
               <h2 style="font-size:1.15rem; font-weight:700; color:var(--text-primary); margin:0;">
                 ${todayInfo.fullFormattedDate}
               </h2>
               <span class="period-tag" style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:3px;">TODAY</span>
-              ${isDayBlocked ? `<span class="locked-header-badge">${blockBadge}</span>` : ''}
+              <div class="day-status-pill day-status-pill-${blockType}" style="font-size:0.65rem; padding:2px 7px;">
+                <span class="status-indicator-dot"></span>
+                <span>${blockType === 'holiday' ? 'Company Holiday • 0h Required' : (blockType === 'leave' ? 'Approved Leave • 0h Required' : (blockType === 'weekend' ? 'Weekend' : `Working Day • ${maxAllowed}h Cap`))}</span>
+              </div>
             </div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
               ${isDayBlocked ? `
-                <span style="color:#b91c1c; font-weight:600;">🔒 ${blockLabel} — Timesheet entries locked</span>
+                <span style="color:#b91c1c; font-weight:600;">🔒 ${blockLabel} — Timesheet entries locked (0h required)</span>
               ` : `
                 Daily Cap: <strong>${maxAllowed}h</strong> • Logged Today: <strong class="tabular-nums" style="color:${isDayExceeded ? '#e11d48' : (dayTotal === maxAllowed ? 'var(--status-approved-text)' : '#d97706')};">${dayTotal.toFixed(1)}h</strong>
                 ${isDayExceeded ? `<span style="color:#e11d48; font-weight:700; margin-left:0.3rem;">(Exceeds daily cap by +${(dayTotal - maxAllowed).toFixed(1)}h)</span>` : ''}
@@ -747,18 +754,19 @@ const EmployeeView = {
           <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:var(--radius-sm); padding:2.5rem 1.5rem; text-align:center; color:var(--text-muted); margin:1rem 0; cursor:not-allowed;">
             <div style="font-size:2.5rem; margin-bottom:0.5rem; cursor:not-allowed;">${blockType === 'weekend' ? '🔒' : (blockType === 'holiday' ? '🏖️' : '🌴')}</div>
             <div style="font-weight:700; font-size:1.1rem; color:var(--text-primary); cursor:not-allowed;">${blockLabel}</div>
-            <div style="font-size:0.85rem; margin-top:6px; color:var(--text-secondary); max-width:500px; margin-left:auto; margin-right:auto; cursor:not-allowed;">
+            <div style="font-size:0.85rem; margin-top:6px; color:var(--text-secondary); max-width:520px; margin-left:auto; margin-right:auto; cursor:not-allowed;">
               ${blockType === 'weekend' 
                 ? 'Work hours cannot be logged on weekends (Saturday & Sunday). Timesheet entry is restricted to official working days (Monday to Friday).' 
-                : `This day is recognized as an official <strong>${blockType === 'holiday' ? 'Company Statutory Holiday' : 'Approved Leave Day'}</strong>. Work hours cannot be logged for this date.`}
+                : (blockType === 'leave'
+                  ? `<strong>Approved Leave:</strong> ${employee.name} is on approved leave for ${todayInfo.fullFormattedDate}. Expected working hours are <strong>0h</strong> and automatically deducted from weekly target requirements.`
+                  : `<strong>Company Statutory Holiday:</strong> ${todayInfo.fullFormattedDate} is recognized as an official Company Holiday. No working hours are required for employees (automatically adjusted in weekly capacity).`)}
             </div>
-            ${blockType === 'weekend' ? `
-              <div style="margin-top:1rem;">
-                <span style="display:inline-block; font-size:0.75rem; color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:0.35rem 0.75rem; border-radius:var(--radius-xs); font-weight:600; cursor:not-allowed;">
-                  🔒 Weekend Lock Active — Hours cannot be submitted for Saturday/Sunday
-                </span>
-              </div>
-            ` : ''}
+            <div style="margin-top:1rem;">
+              <span class="day-status-pill day-status-pill-${blockType}" style="font-size:0.75rem; padding:4px 10px; cursor:not-allowed;">
+                <span class="status-indicator-dot"></span>
+                ${blockType === 'leave' ? '🌴 Leave Day Active — 0h Required' : (blockType === 'holiday' ? '🏖️ Holiday Active — 0h Required' : '🔒 Weekend Lock Active')}
+              </span>
+            </div>
           </div>
         ` : `
           <!-- Daily Multi-Task Action Bar -->

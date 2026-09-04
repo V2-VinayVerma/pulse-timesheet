@@ -310,9 +310,17 @@ class PulseState {
     return leaves.find(l => l.employeeId === employeeId && l.weekId === targetWeek && l.dayIndex === dayIndex) || null;
   }
 
-  // Consolidated day lock status (Holiday / Approved Leave)
+  // Consolidated day lock status (Holiday / Approved Leave / Weekend)
   getDayLockStatus(employeeId, dayIndex, weekId = null) {
     const targetWeek = weekId || this.selectedWeekId;
+    if (dayIndex === 5 || dayIndex === 6) {
+      return { 
+        isLocked: true, 
+        type: 'weekend', 
+        label: dayIndex === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)', 
+        badge: '🏖️ WEEKEND' 
+      };
+    }
     const holiday = this.getHolidayForDay(dayIndex, targetWeek);
     if (holiday) {
       return { isLocked: true, type: 'holiday', label: holiday.name, badge: '🏖️ HOLIDAY' };
@@ -639,7 +647,11 @@ class PulseState {
 
     const lock = this.getDayLockStatus(employeeId, dayIndex, weekId);
     if (lock.isLocked) {
-      return { success: false, reason: 'LOCKED_DAY', message: `Cannot log hours on ${lock.label}` };
+      return { 
+        success: false, 
+        reason: lock.type === 'weekend' ? 'LOCKED_WEEKEND' : 'LOCKED_DAY', 
+        message: lock.type === 'weekend' ? 'Work hours cannot be logged on Saturday or Sunday.' : `Cannot log hours on ${lock.label}` 
+      };
     }
 
     const row = sheet.rows.find(r => r.id === rowId);

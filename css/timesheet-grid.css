@@ -534,10 +534,17 @@ input[type=number] {
   border: 1px solid #cbd5e1;
 }
 
-/* Locked Holiday & Leave Day Styles */
+/* Locked Holiday, Leave & Weekend Day Styles */
+.col-day-header.is-weekend,
 .col-day-header.is-locked-day {
   background: #f1f5f9;
   border-bottom: 2px solid #cbd5e1;
+  cursor: not-allowed !important;
+}
+
+.col-day-header.is-weekend *,
+.col-day-header.is-locked-day * {
+  cursor: not-allowed !important;
 }
 
 .locked-header-badge {
@@ -549,11 +556,19 @@ input[type=number] {
   border-radius: 2px;
   margin-top: 2px;
   white-space: nowrap;
+  cursor: not-allowed !important;
 }
 
+.day-hour-cell.is-weekend-cell,
 .day-hour-cell.is-locked-day-cell {
   background: #f8fafc;
   vertical-align: middle;
+  cursor: not-allowed !important;
+}
+
+.day-hour-cell.is-weekend-cell *,
+.day-hour-cell.is-locked-day-cell * {
+  cursor: not-allowed !important;
 }
 
 .locked-cell-box {
@@ -567,8 +582,23 @@ input[type=number] {
   border: 1px dashed #cbd5e1;
   border-radius: 6px;
   color: var(--text-muted);
-  cursor: not-allowed;
+  cursor: not-allowed !important;
   user-select: none;
+  transition: all var(--transition-fast);
+}
+
+.locked-cell-box:hover,
+.locked-weekend-box:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #991b1b !important;
+  cursor: not-allowed !important;
+}
+
+.locked-icon,
+.locked-tag,
+.locked-sub {
+  cursor: not-allowed !important;
 }
 
 .locked-icon {

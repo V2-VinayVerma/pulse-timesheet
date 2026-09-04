@@ -402,11 +402,14 @@ const EmployeeView = {
               <th class="col-task-details">Project / Category / Scope</th>
               ${weekDays.map((day, dayIdx) => {
                 const lock = state.getDayLockStatus(sheet.employeeId, dayIdx, sheet.weekId);
+                const isWeekend = dayIdx >= 5 || day.isWeekend || lock.type === 'weekend';
+                const lockBadge = lock.isLocked ? lock.badge : (isWeekend ? '🏖️ WEEKEND' : '');
+                const lockLabel = isWeekend ? (dayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : lock.label;
                 return `
-                  <th class="col-day-header ${day.isToday ? 'is-today' : ''} ${day.isWeekend ? 'is-weekend' : ''} ${lock.isLocked ? 'is-locked-day' : ''}">
+                  <th class="col-day-header ${day.isToday ? 'is-today' : ''} ${isWeekend ? 'is-weekend' : ''} ${lock.isLocked ? 'is-locked-day' : ''}" data-locked-type="${isWeekend ? 'weekend' : lock.type}" data-locked-label="${lockLabel}">
                     <div class="day-name">${day.name.toUpperCase()}</div>
                     <div class="day-date">${day.date}</div>
-                    ${lock.isLocked ? `<div class="locked-header-badge">${lock.badge}</div>` : ''}
+                    ${lockBadge ? `<div class="locked-header-badge">${lockBadge}</div>` : ''}
                   </th>
                 `;
               }).join('')}
@@ -433,18 +436,16 @@ const EmployeeView = {
                 const isExceeded = tot > maxAllowed;
 
                 return `
-                  <td class="day-hour-cell ${isWeekend ? 'is-weekend-cell' : ''} ${lock.isLocked ? 'is-locked-day-cell' : ''}" style="text-align:center; vertical-align:middle;">
-                    <div class="daily-total-summary">
-                      ${lock.isLocked ? `
-                        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">-</span>
-                      ` : (isWeekend ? `
-                        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">${tot > 0 ? `${tot.toFixed(1)}h` : '-'}</span>
+                  <td class="day-hour-cell ${isWeekend ? 'is-weekend-cell' : ''} ${lock.isLocked ? 'is-locked-day-cell' : ''}" style="text-align:center; vertical-align:middle; ${isWeekend ? 'cursor:not-allowed;' : ''}">
+                    <div class="daily-total-summary" style="${isWeekend ? 'cursor:not-allowed;' : ''}">
+                      ${(isWeekend || lock.isLocked) ? `
+                        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600; cursor:not-allowed;">-</span>
                       ` : `
                         <span class="daily-hrs-val tabular-nums" style="color: ${isExceeded ? '#e11d48' : (tot > 0 ? '#059669' : '#64748b')}; font-size:0.95rem; font-weight:800;">
                           ${tot.toFixed(1)}h
                         </span>
                         <div style="font-size:0.65rem; color:#94a3b8;">cap ${maxAllowed}h</div>
-                      `)}
+                      `}
                     </div>
                   </td>
                 `;
@@ -619,14 +620,21 @@ const EmployeeView = {
           const note = row.dayNotes ? row.dayNotes[dayIdx] || '' : '';
           const dayInfo = daysList[dayIdx] || { name: `Day ${dayIdx + 1}`, date: '' };
           const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
+          const isBlocked = isWeekend || lock.isLocked;
 
-          if (lock.isLocked) {
+          if (isBlocked) {
+            const isWeekendLock = isWeekend || lock.type === 'weekend';
+            const lockLabel = isWeekendLock ? (dayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : lock.label;
+            const lockType = isWeekendLock ? 'weekend' : lock.type;
+            const lockTag = isWeekendLock ? 'Weekend' : (lock.type === 'holiday' ? 'Holiday' : 'Leave');
+            const lockIcon = isWeekendLock ? '🔒' : (lock.type === 'holiday' ? '🏖️' : '🌴');
+
             return `
-              <td class="day-hour-cell is-locked-day-cell">
-                <div class="locked-cell-box" title="${lock.label}">
-                  <span class="locked-icon">${lock.type === 'holiday' ? '🏖️' : '🌴'}</span>
-                  <span class="locked-tag">${lock.type === 'holiday' ? 'Holiday' : 'Leave'}</span>
-                  <span class="locked-sub">${lock.label.length > 15 ? lock.label.substring(0, 14) + '...' : lock.label}</span>
+              <td class="day-hour-cell is-locked-day-cell is-weekend-cell" style="vertical-align:middle; text-align:center; cursor:not-allowed;">
+                <div class="locked-cell-box locked-weekend-box" title="${lockLabel} — Work hours cannot be logged" data-locked-type="${lockType}" data-locked-label="${lockLabel}" style="cursor:not-allowed;">
+                  <span class="locked-icon" style="cursor:not-allowed;">${lockIcon}</span>
+                  <span class="locked-tag" style="cursor:not-allowed;">${lockTag}</span>
+                  <span class="locked-sub" style="cursor:not-allowed;">${lockLabel.length > 15 ? lockLabel.substring(0, 14) + '...' : lockLabel}</span>
                 </div>
               </td>
             `;
@@ -703,6 +711,11 @@ const EmployeeView = {
     const remainingHrs = Math.max(0, expectedWeeklyHours - grandTotal);
     const isSubmitEligible = isTargetMet && !isLocked;
 
+    const isDayBlocked = currentDayIdx >= 5 || dayLock.isLocked;
+    const blockType = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? 'weekend' : dayLock.type;
+    const blockLabel = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? (currentDayIdx === 5 ? 'Saturday (Weekend)' : 'Sunday (Weekend)') : dayLock.label;
+    const blockBadge = (currentDayIdx >= 5 || dayLock.type === 'weekend') ? '🏖️ WEEKEND' : dayLock.badge;
+
     return `
       <div class="timesheet-daily-card" style="background:#ffffff; border:1px solid var(--grid-border); border-radius:var(--radius-md); padding:1.25rem; box-shadow:var(--shadow-xs);">
         <!-- Day Navigation Title & Summary (Only Today's Date & Day) -->
@@ -713,11 +726,11 @@ const EmployeeView = {
                 ${todayInfo.fullFormattedDate}
               </h2>
               <span class="period-tag" style="background:#dbeafe; color:#1d4ed8; font-size:0.68rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:3px;">TODAY</span>
-              ${dayLock.isLocked ? `<span class="locked-header-badge">${dayLock.badge}</span>` : ''}
+              ${isDayBlocked ? `<span class="locked-header-badge">${blockBadge}</span>` : ''}
             </div>
             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">
-              ${dayLock.isLocked ? `
-                <span style="color:#b91c1c; font-weight:600;">🔒 ${dayLock.label} — Timesheet entries locked</span>
+              ${isDayBlocked ? `
+                <span style="color:#b91c1c; font-weight:600;">🔒 ${blockLabel} — Timesheet entries locked</span>
               ` : `
                 Daily Cap: <strong>${maxAllowed}h</strong> • Logged Today: <strong class="tabular-nums" style="color:${isDayExceeded ? '#e11d48' : (dayTotal === maxAllowed ? 'var(--status-approved-text)' : '#d97706')};">${dayTotal.toFixed(1)}h</strong>
                 ${isDayExceeded ? `<span style="color:#e11d48; font-weight:700; margin-left:0.3rem;">(Exceeds daily cap by +${(dayTotal - maxAllowed).toFixed(1)}h)</span>` : ''}
@@ -730,13 +743,22 @@ const EmployeeView = {
           </div>
         </div>
 
-        ${dayLock.isLocked ? `
-          <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:var(--radius-sm); padding:2rem 1.5rem; text-align:center; color:var(--text-muted); margin:1rem 0;">
-            <div style="font-size:2.25rem; margin-bottom:0.5rem;">${dayLock.type === 'holiday' ? '🏖️' : '🌴'}</div>
-            <div style="font-weight:700; font-size:1.05rem; color:var(--text-primary);">${dayLock.label}</div>
-            <div style="font-size:0.8rem; margin-top:6px; color:var(--text-secondary);">
-              This day is recognized as an official <strong>${dayLock.type === 'holiday' ? 'Company Statutory Holiday' : 'Approved Leave Day'}</strong>. Work hours cannot be logged for this date.
+        ${isDayBlocked ? `
+          <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:var(--radius-sm); padding:2.5rem 1.5rem; text-align:center; color:var(--text-muted); margin:1rem 0; cursor:not-allowed;">
+            <div style="font-size:2.5rem; margin-bottom:0.5rem; cursor:not-allowed;">${blockType === 'weekend' ? '🔒' : (blockType === 'holiday' ? '🏖️' : '🌴')}</div>
+            <div style="font-weight:700; font-size:1.1rem; color:var(--text-primary); cursor:not-allowed;">${blockLabel}</div>
+            <div style="font-size:0.85rem; margin-top:6px; color:var(--text-secondary); max-width:500px; margin-left:auto; margin-right:auto; cursor:not-allowed;">
+              ${blockType === 'weekend' 
+                ? 'Work hours cannot be logged on weekends (Saturday & Sunday). Timesheet entry is restricted to official working days (Monday to Friday).' 
+                : `This day is recognized as an official <strong>${blockType === 'holiday' ? 'Company Statutory Holiday' : 'Approved Leave Day'}</strong>. Work hours cannot be logged for this date.`}
             </div>
+            ${blockType === 'weekend' ? `
+              <div style="margin-top:1rem;">
+                <span style="display:inline-block; font-size:0.75rem; color:#b45309; background:#fffbeb; border:1px solid #fde68a; padding:0.35rem 0.75rem; border-radius:var(--radius-xs); font-weight:600; cursor:not-allowed;">
+                  🔒 Weekend Lock Active — Hours cannot be submitted for Saturday/Sunday
+                </span>
+              </div>
+            ` : ''}
           </div>
         ` : `
           <!-- Daily Multi-Task Action Bar -->
@@ -1342,6 +1364,14 @@ const EmployeeView = {
       input.addEventListener('change', (e) => {
         const rowId = e.target.getAttribute('data-row-id');
         const dayIdx = parseInt(e.target.getAttribute('data-day-idx'), 10);
+        const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
+
+        if (lock.isLocked) {
+          e.target.value = '';
+          App.showToast(lock.type === 'weekend' ? "🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday." : `🔒 Cannot log hours on ${lock.label}`, "warning");
+          return;
+        }
+
         const rawVal = e.target.value.trim();
         const val = parseFloat(rawVal) || 0;
 
@@ -1349,7 +1379,10 @@ const EmployeeView = {
           App.showToast("⚠️ Hours cannot be 0. It should be greater than 0.", "warning");
         }
 
-        state.updateCellHours(employeeId, weekId, rowId, dayIdx, Math.max(0, val));
+        const res = state.updateCellHours(employeeId, weekId, rowId, dayIdx, Math.max(0, val));
+        if (res && !res.success && res.message) {
+          App.showToast(res.message, "warning");
+        }
       });
 
       input.addEventListener('keydown', (e) => {
@@ -1368,10 +1401,20 @@ const EmployeeView = {
       btn.addEventListener('click', () => {
         const rowId = btn.getAttribute('data-row-id');
         const dayIdx = parseInt(btn.getAttribute('data-day-idx'), 10);
+        const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
+
+        if (lock.isLocked) {
+          App.showToast(lock.type === 'weekend' ? "🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday." : `🔒 Cannot log hours on ${lock.label}`, "warning");
+          return;
+        }
+
         const input = container.querySelector(`.hour-input[data-row-id="${rowId}"][data-day-idx="${dayIdx}"]`);
-        const current = parseFloat(input.value) || 0;
+        const current = parseFloat(input ? input.value : 0) || 0;
         const newHrs = current + 0.5;
-        state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
+        const res = state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
+        if (res && !res.success && res.message) {
+          App.showToast(res.message, "warning");
+        }
       });
     });
 
@@ -1379,13 +1422,38 @@ const EmployeeView = {
       btn.addEventListener('click', () => {
         const rowId = btn.getAttribute('data-row-id');
         const dayIdx = parseInt(btn.getAttribute('data-day-idx'), 10);
+        const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
+
+        if (lock.isLocked) {
+          App.showToast(lock.type === 'weekend' ? "🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday." : `🔒 Cannot log hours on ${lock.label}`, "warning");
+          return;
+        }
+
         const input = container.querySelector(`.hour-input[data-row-id="${rowId}"][data-day-idx="${dayIdx}"]`);
-        const current = parseFloat(input.value) || 0;
+        const current = parseFloat(input ? input.value : 0) || 0;
         const newHrs = Math.max(0, current - 0.5);
         if (newHrs === 0 && current > 0) {
           App.showToast("⚠️ Hours cannot be 0. It should be greater than 0.", "warning");
         }
-        state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
+        const res = state.updateCellHours(employeeId, weekId, rowId, dayIdx, newHrs);
+        if (res && !res.success && res.message) {
+          App.showToast(res.message, "warning");
+        }
+      });
+    });
+
+    // Prompt when clicking on a locked cell or weekend cell
+    container.querySelectorAll('.locked-cell-box, .is-locked-day-cell, .col-day-header.is-locked-day, .col-day-header.is-weekend').forEach(cell => {
+      cell.addEventListener('click', (e) => {
+        // avoid double toast if clicking interactive element inside
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        const lockType = cell.getAttribute('data-locked-type') || (cell.classList.contains('is-weekend') || cell.classList.contains('is-weekend-cell') ? 'weekend' : 'locked');
+        const lockLabel = cell.getAttribute('data-locked-label') || (lockType === 'weekend' ? 'Saturday/Sunday (Weekend)' : 'Locked Day');
+        if (lockType === 'weekend') {
+          App.showToast('🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday.', 'warning');
+        } else {
+          App.showToast(`🔒 Locked Day: Cannot log hours on ${lockLabel}.`, 'warning');
+        }
       });
     });
 
@@ -1621,7 +1689,7 @@ const EmployeeView = {
         const dayIdx = state.activeDayIndex;
         const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
         if (lock.isLocked) {
-          App.showToast(`Cannot log hours on ${lock.label}`, 'warning');
+          App.showToast(lock.type === 'weekend' ? '🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday.' : `Cannot log hours on ${lock.label}`, 'warning');
           return;
         }
         const maxAllowed = state.getDailyAllowedHours(employeeId, weekId, dayIdx);
@@ -1649,7 +1717,13 @@ const EmployeeView = {
     const btnDailyCopyYesterday = container.querySelector('#btnDailyCopyYesterday');
     if (btnDailyCopyYesterday) {
       btnDailyCopyYesterday.addEventListener('click', () => {
-        state.copyYesterday(employeeId, weekId, state.activeDayIndex);
+        const dayIdx = state.activeDayIndex;
+        const lock = state.getDayLockStatus(employeeId, dayIdx, weekId);
+        if (lock.isLocked) {
+          App.showToast(lock.type === 'weekend' ? '🔒 Weekend Day: Work hours cannot be logged on Saturday or Sunday.' : `Cannot copy to ${lock.label}`, 'warning');
+          return;
+        }
+        state.copyYesterday(employeeId, weekId, dayIdx);
         App.showToast("Copied yesterday's hours and standup notes!", 'success');
       });
     }

@@ -606,6 +606,39 @@ const INITIAL_MOCK_DATA = {
           ]
         }
       ]
+    },
+
+    // Alex Chen - Week 36 (Current Week: 32h expected with Sep 1 Holiday auto-deducted)
+    {
+      id: 'ts_alex_w36',
+      employeeId: 'emp_alex',
+      weekId: '2026-W36',
+      weekStart: '2026-08-31',
+      weekEnd: '2026-09-06',
+      status: 'draft',
+      submittedAt: null,
+      approvedAt: null,
+      rejectedAt: null,
+      rejectionReason: null,
+      rows: [
+        {
+          id: 'row_alex_w36_1',
+          projectId: 'proj_apex',
+          task: 'Feature Development',
+          workItem: 'Stripe Checkout Integration',
+          description: 'Multi-currency checkout validation and fee calculation engine',
+          hours: [8, 0, 8, 8, 8, 0, 0],
+          dayNotes: [
+            'Stripe Checkout session initialization and currency converter',
+            '🏖️ HOLIDAY: Company Statutory Holiday',
+            'Webhook secret validation and payment event listener',
+            'Fee calculation engine and multi-currency discount rules',
+            'Unit test suites and PR submission for sprint demo',
+            '',
+            ''
+          ]
+        }
+      ]
     }
   ],
 

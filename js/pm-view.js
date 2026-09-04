@@ -20,7 +20,13 @@ const PMView = {
         rows: []
       };
       const allocs = pmAllocations.filter(a => a.employeeId === emp.id);
-      const allocatedHrs = allocs.reduce((sum, a) => sum + (Number(a.hoursPerDay) * 5), 0);
+      let allocatedHrs = 0;
+      for (let d = 0; d < 5; d++) {
+        const lock = state.getDayLockStatus(emp.id, d, weekId);
+        if (!lock.isLocked) {
+          allocatedHrs += allocs.reduce((sum, a) => sum + Number(a.hoursPerDay), 0);
+        }
+      }
       
       const loggedHrs = sheet.rows ? sheet.rows.reduce((sum, r) => {
         return sum + r.hours.reduce((hSum, h) => hSum + (Number(h) || 0), 0);

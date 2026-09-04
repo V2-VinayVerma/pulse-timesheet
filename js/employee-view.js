@@ -1034,7 +1034,7 @@ const EmployeeView = {
                     </td>
                     <td>
                       <strong class="tabular-nums" style="font-size:0.95rem;">${w.totalHours.toFixed(1)}h</strong>
-                      <span style="font-size:0.7rem; color:var(--text-muted);">/ 40h</span>
+                      <span style="font-size:0.7rem; color:var(--text-muted);">/ ${state.getWeeklyAllowedHours(sheet.employeeId, w.week.id)}h</span>
                     </td>
                     <td>
                       <span class="billable-pill is-billable">${w.billableHours.toFixed(1)}h Billable</span>

@@ -495,7 +495,7 @@ class PulseState {
     const grandTotal = monthlySheets.reduce((sum, w) => sum + w.totalHours, 0);
     const grandBillable = monthlySheets.reduce((sum, w) => sum + w.billableHours, 0);
     const grandNonBillable = monthlySheets.reduce((sum, w) => sum + w.nonBillableHours, 0);
-    const targetHours = 160;
+    const targetHours = monthlySheets.reduce((sum, w) => sum + this.getWeeklyAllowedHours(employeeId, w.week.id), 0);
 
     return {
       monthStr: targetMonth,
@@ -1599,7 +1599,13 @@ class PulseState {
       const sheet = this.getTimesheet(empId, targetWeek);
       const totalLoggedHours = sheet ? sheet.rows.reduce((s, r) => s + r.hours.reduce((x, h) => x + (Number(h) || 0), 0), 0) : 0;
       const targetDailyHours = empAllocs.reduce((s, a) => s + Number(a.hoursPerDay), 0);
-      const targetWeeklyHours = targetDailyHours * 5;
+      let targetWeeklyHours = 0;
+      for (let d = 0; d < 5; d++) {
+        const lock = this.getDayLockStatus(empId, d, targetWeek);
+        if (!lock.isLocked) {
+          targetWeeklyHours += targetDailyHours;
+        }
+      }
 
       let status = 'draft';
       if (sheet) {
